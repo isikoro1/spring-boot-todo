@@ -1,5 +1,6 @@
 package com.isikoro1.spring_boot_todo;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -19,6 +20,14 @@ public class TodoController {
 		return repository.findAll();
 	}
 	
+	// １件取得（GET　/todos/{id}）
+	@GetMapping("/{id}")
+	public ResponseEntity<Todo> findById(@PathVariable Long id) {
+		return repository.findById(id)
+				.map(ResponseEntity::ok)						// 見つかった → 200 OK
+				.orElse(ResponseEntity.notFound().build());		// 見つからない → 404 Not Found
+	}
+	
 	// 新規作成（POST /todos）
 	@PostMapping
 	public Todo create(@RequestBody Todo todo) {
@@ -34,7 +43,13 @@ public class TodoController {
 	
 	// 削除（DELETE /todos/{id}）
 	@DeleteMapping("/{id}")
-	public void delete(@PathVariable Long id) {
-		repository.deleteById(id);
+	public ResponseEntity<Void> delete(@PathVariable Long id) {
+		if (repository.existsById(id)) {
+			repository.deleteById(id);
+			return ResponseEntity.noContent().build(); // 204 No Content
+		} else {
+			return ResponseEntity.notFound().build(); // 404 Not Found
+		}
 	}
+
 }
