@@ -5,6 +5,8 @@ import static org.mockito.BDDMockito.given;
 import org.springframework.http.MediaType;
 
 import java.util.Optional;
+import java.util.Arrays;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,6 +57,33 @@ public class TodoControllerTest {
 		// GET /todos/999 → 404
 		mockMvc.perform(get("/todos/999"))
 				.andExpect(status().isNotFound());
+	}
+	
+	@Test
+	void testGetAllTodos() throws Exception {
+		// モックのリストを準備
+		Todo todo1 = new Todo();
+		todo1.setId(1L);
+		todo1.setTitle("Task 1");
+		todo1.setDone(false);
+		
+		Todo todo2 = new Todo();
+		todo2.setId(2L);
+		todo2.setTitle("Task 2");
+		todo2.setDone(true);
+		
+		List<Todo> todos = Arrays.asList(todo1, todo2);
+		given(todoRepository.findAll()).willReturn(todos);
+		
+		// GET /todos 実行
+		mockMvc.perform(get("/todos"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$[0].id").value(1))
+				.andExpect(jsonPath("$[0].title").value("Task 1"))
+				.andExpect(jsonPath("$[0].done").value(false))
+				.andExpect(jsonPath("$[1].id").value(2))
+				.andExpect(jsonPath("$[1].title").value("Task 2"))
+				.andExpect(jsonPath("$[1].done").value(true));
 	}
 	
 	@Test
