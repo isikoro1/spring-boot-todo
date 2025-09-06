@@ -4,6 +4,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.validation.constraints.NotBlank;
 
 @Entity
 public class Todo {
@@ -11,10 +12,11 @@ public class Todo {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 	
+	@NotBlank(message = "タイトルは必須です")
 	private String title;
 	private boolean done;
 	
-	// デフォルトコンストラクタ（必須）
+	// デフォルトコンストラクタ（必須）とgetter/setter
 	public Todo() {
 	}
 	
