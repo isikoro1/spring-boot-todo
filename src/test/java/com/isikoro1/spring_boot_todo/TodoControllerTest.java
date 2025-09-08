@@ -28,7 +28,7 @@ public class TodoControllerTest {
 	private MockMvc mockMvc;
 	
 	@MockBean
-	private TodoRepository todoRepository;
+	private TodoService todoService;
 	
 	@Test
 	void testGetTodoById_Found() throws Exception {
@@ -38,7 +38,7 @@ public class TodoControllerTest {
 		todo.setTitle("Test Task");
 		todo.setDone(false);
 		
-		given(todoRepository.findById(1L)).willReturn(Optional.of(todo));
+		given(todoService.findById(1L)).willReturn(Optional.of(todo));
 		
 		// GET /todos/1 を実行 → JSONを検証
 		mockMvc.perform(get("/todos/1"))
@@ -52,7 +52,7 @@ public class TodoControllerTest {
 	@Test
 	void testGetTodoById_NotFound() throws Exception {
 		// 存在しないIDの場合は空
-		given(todoRepository.findById(999L)).willReturn(Optional.empty());
+		given(todoService.findById(999L)).willReturn(Optional.empty());
 		
 		// GET /todos/999 → 404
 		mockMvc.perform(get("/todos/999"))
@@ -73,7 +73,7 @@ public class TodoControllerTest {
 		todo2.setDone(true);
 		
 		List<Todo> todos = Arrays.asList(todo1, todo2);
-		given(todoRepository.findAll()).willReturn(todos);
+		given(todoService.findAll()).willReturn(todos);
 		
 		// GET /todos 実行
 		mockMvc.perform(get("/todos"))
@@ -88,13 +88,12 @@ public class TodoControllerTest {
 	
 	@Test
 	void testCreateTodo() throws Exception {
-		// 保存後に返されるTodoをモック
 		Todo savedTodo = new Todo();
 		savedTodo.setId(1L);
 		savedTodo.setTitle("New Task");
 		savedTodo.setDone(false);
 		
-		given(todoRepository.save(any(Todo.class))).willReturn(savedTodo);
+		given(todoService.create(any(Todo.class))).willReturn(savedTodo);
 		
 		// POST /todos 実行
 		mockMvc.perform(post("/todos")
@@ -110,21 +109,13 @@ public class TodoControllerTest {
 	
 	@Test
 	void testUpdateTodo() throws Exception {
-		// 更新前
-		Todo existingTodo = new Todo();
-		existingTodo.setId(1L);
-		existingTodo.setTitle("Old Task");
-		existingTodo.setDone(false);
-		
-		// 更新後
 		Todo updatedTodo = new Todo();
 		updatedTodo.setId(1L);
 		updatedTodo.setTitle("Updated Task");
 		updatedTodo.setDone(true);
 		
 		// モック設定: findByIdは existingTodo を返す、saveは updatedTodo を返す
-		given(todoRepository.findById(1L)).willReturn(java.util.Optional.of(existingTodo));
-		given(todoRepository.save(any(Todo.class))).willReturn(updatedTodo);
+		given(todoService.update(any(Long.class), any(Todo.class))).willReturn(updatedTodo);
 		
 		// PUT /todos/1
 		mockMvc.perform(put("/todos/1")
@@ -139,7 +130,7 @@ public class TodoControllerTest {
 	@Test
 	void testDeleteTodo_Success() throws Exception {
 		// 存在するIDなら true を返す
-		given(todoRepository.existsById(1L)).willReturn(true);
+		given(todoService.delete(1L)).willReturn(true);
 		
 		// DELETE /todos/1 実行
 		mockMvc.perform(delete("/todos/1"))
@@ -150,7 +141,7 @@ public class TodoControllerTest {
 	@Test
 	void testDeleteTodo_NotFound() throws Exception {
 		// 存在しないIDなら false を返す
-		given(todoRepository.existsById(999L)).willReturn(false);
+		given(todoService.delete(999L)).willReturn(false);
 		
 		// DELETE /todos/999 実行
 		mockMvc.perform(delete("/todos/999"))

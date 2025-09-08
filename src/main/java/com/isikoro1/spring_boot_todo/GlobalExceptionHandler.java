@@ -3,54 +3,49 @@ package com.isikoro1.spring_boot_todo;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.BindException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 
+// 全コントローラ共通でエラーを処理する仕組み
+// アプリのどの Controller で例外が起きても、ここに飛んでくる
 @ControllerAdvice
 public class GlobalExceptionHandler {
-	
-	//　カスタムエラーレスポンス用の内部クラス
-	static class ErrorResponse {
-		private int status;
-		private String message;
-		
-		public ErrorResponse(int status, String message) {
-			this.status = status;
-			this.message = message;
-		}
-		
-		public int getStatus() { return status; }
-		public String getMessage() { return message; }
-	}
 
-	// @Valid + @RequestBody のバリデーションエラー
-	@ExceptionHandler(MethodArgumentNotValidException.class)
-	public ResponseEntity<ErrorResponse> handleValidationErrors(MethodArgumentNotValidException ex) {
-		// 最初のエラーメッセージを取得
-		String errorMessage = ex.getBindingResult()
-								.getAllErrors()
-								.get(0)
-								.getDefaultMessage();
-		
-		// カスタムレスポンスを返す
-		return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-				.body(new ErrorResponse(400, errorMessage));
-	}
-	
-	// Form系やパラメータバインドでのエラー（念のため追加）
-	@ExceptionHandler(BindException.class)
-	public ResponseEntity<ErrorResponse> handleBindErrors(BindException ex) {
-		String errorMessage = ex.getBindingResult()
-								.getAllErrors()
-								.get(0)
-								.getDefaultMessage();
-		
-		return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-								.body(new ErrorResponse(400, errorMessage));
-	}
-	
+	 // バリデーションエラー用
+	// どの種類の例外を処理するか指定する
+    @ExceptionHandler(MethodArgumentNotValidException.class) 
+    public ResponseEntity<Map<String, Object>> handleValidationException(MethodArgumentNotValidException ex) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("status", HttpStatus.BAD_REQUEST.value());
+        body.put("error", "Bad Request");
+
+        // 最初のエラーメッセージを返す
+        String message = ex.getBindingResult().getFieldErrors().stream()
+                .map(error -> error.getField() + ": " + error.getDefaultMessage())
+                .findFirst()
+                .orElse("Validation error");
+        body.put("message", message);
+
+        return ResponseEntity.badRequest().body(body);
+    }
+
+    // その他の例外用（デフォルト）
+    // 
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Map<String, Object>> handleGenericException(Exception ex) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
+        body.put("error", "Internal Server Error");
+        body.put("message", ex.getMessage());
+
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
+    }
 	
 }
