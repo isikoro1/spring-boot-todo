@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Todo List</title>
+</head>
+<body>
+    <h1>Todo List</h1>
+    <!-- 新規追加フォーム -->
+    <form th:action="@{/todos}" method="post">
+        <input type="text" th:field="{title}" placeholder="New Todo">
+        <button type="submit">追加</button>
+    </form>
+
+    <ul>
+        <li th:each="todo : ${todos}">
+            <span th:text="${todo.title}"></span>
+            <span th:text="${todo.done} ? '✔' : ''"></span>
+
+            <!-- 完了トグル -->
+            <form th:action="@{'/todos' + ${todo.id} + '/toggle'}" method="post" style="display:inline;">
+                <button type="submit">完了切替</button>
+            </form>
+
+            <!-- 削除 -->
+            <form th:action="@{'/todos/' + ${todo.id} + '/delete'}" method="post" style="display:inline;">
+                <button type="submit">削除</button>
+            </form>
+        </li>
+    </ul>
+</body>
+</html>
